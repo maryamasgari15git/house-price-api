@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>پیش‌بینی قیمت خانه</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <h1>🏠 پیش‌بینی قیمت خانه</h1>
+
+  <form id="predictForm">
+    <label>متراژ (m²):</label>
+    <input type="number" id="area" step="0.1" required><br>
+
+    <label>تعداد اتاق:</label>
+    <input type="number" id="rooms" required><br>
+
+    <label>فاصله تا مرکز شهر (km):</label>
+    <input type="number" id="distance" step="0.1" required><br>
+
+    <button type="submit">پیش‌بینی</button>
+  </form>
+
+  <div id="result"></div>
+
+  <hr>
+  <h2>📂 آپلود فایل CSV برای پیش‌بینی گروهی</h2>
+  <form id="csvForm" enctype="multipart/form-data">
+    <input type="file" id="csvFile" accept=".csv" required>
+    <button type="submit">آپلود و دریافت نتایج</button>
+  </form>
+
+  <script>
+    document.getElementById("predictForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        area: parseFloat(document.getElementById("area").value),
+        rooms: parseInt(document.getElementById("rooms").value),
+        distance: parseFloat(document.getElementById("distance").value)
+      };
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      document.getElementById("result").innerHTML = `<h3>💰 قیمت پیش‌بینی‌شده: ${json.predicted_price.toFixed(2)}</h3>`;
+    });
+
+    document.getElementById("csvForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const formData = new FormData();
+      formData.append("file", document.getElementById("csvFile").files[0]);
+      const res = await fetch("/predict_csv", {
+        method: "POST",
+        body: formData
+      });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "predictions.csv";
+      a.click();
+    });
+  </script>
+</body>
+</html>
