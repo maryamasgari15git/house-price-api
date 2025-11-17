@@ -10,7 +10,7 @@ import altair as alt
 st.set_page_config(page_title="🏡 House Price Dashboard", layout="wide")
 st.title("🏡 House Price Dashboard")
 
-API_URL =API_URL = "https://house-price-api-gvh8.onrender.com"
+API_URL  = "https://house-price-api-gvh8.onrender.com"
   # اگر سرورت روی آدرس/پورت دیگریه، اینو عوض کن
 
 # ---------- ستون سمت راست - فرم ساده برای پیش‌بینی تکی ----------
