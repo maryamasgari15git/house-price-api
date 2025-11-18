@@ -19,17 +19,21 @@ with st.sidebar:
     area = st.number_input("Area (m²)", min_value=1.0, max_value=10000.0, value=100.0, step=0.5)
     rooms = st.number_input("Rooms", min_value=1, max_value=50, value=3, step=1)
     distance = st.number_input("Distance (km)", min_value=0.0, max_value=500.0, value=5.0, step=0.1)
+
     if st.button("Predict (Single)"):
+        
         payload = {"area": float(area), "rooms": int(rooms), "distance": float(distance)}
         try:
-            r = requests.post(f"{API_URL}/predict", json=payload, timeout=10)
+            r = requests.post(f"{API_URL}/predict_with_explanation", json=payload, timeout=10)
             if r.status_code == 200:
                 res = r.json()
                 st.success(f"🏠 Predicted Price: {res['predicted_price']:.2f}")
+                st.info(f"💡 Explanation:\n{res['explanation']}")
             else:
                 st.error(f"API Error {r.status_code}: {r.text}")
         except Exception as e:
             st.error(f"Connection error: {e}")
+
 
 st.markdown("---")
 

@@ -8,3 +8,4 @@ python-multipart
 requests
 jinja2
 streamlit
+openai

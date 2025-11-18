@@ -14,6 +14,10 @@ from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
+import openai
+import os
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
 
 
 app = FastAPI(title="House Price API with History")
@@ -218,3 +222,30 @@ async def predict_csv(file: UploadFile = File(...)):
     return StreamingResponse(buf, media_type="text/csv",
                              headers={"Content-Disposition": f'attachment; filename="{out_filename}"'})
     
+@app.post("/explain_prediction")
+def explain_prediction(data: HouseData):
+    # ۱. گرفتن پیش‌بینی از مدل
+    X = [[data.area, data.rooms, data.distance]]
+    prediction = float(model.predict(X)[0])
+
+    # ۲. پرسش به LLM
+    prompt = f"""
+    You are a real estate assistant. 
+    Given the following input features:
+    area: {data.area}, rooms: {data.rooms}, distance: {data.distance},
+    and the predicted house price: {prediction},
+    explain in simple terms why the price is this value and what factors influenced it.
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-5.1",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=200
+    )
+
+    explanation = response.choices[0].message.content
+
+    return {
+        "predicted_price": round(prediction, 2),
+        "explanation": explanation
+    }
