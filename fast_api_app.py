@@ -15,7 +15,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 import openai
-openai.api_key = "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"
+import os
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 
 
