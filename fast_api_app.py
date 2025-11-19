@@ -227,11 +227,10 @@ async def predict_csv(file: UploadFile = File(...)):
 
 @app.post("/predict_with_explanation")
 def explain_prediction(data: HouseData):
-    # 1. ML Prediction
+    # ML prediction
     X = [[data.area, data.rooms, data.distance]]
     prediction = float(model.predict(X)[0])
 
-    # 2. LLM Explanation
     prompt = f"""
     You are a real estate assistant.
     The model predicted this price: {prediction}.
@@ -243,14 +242,24 @@ def explain_prediction(data: HouseData):
     Explain why the prediction makes sense in simple terms.
     """
 
-    response = client.responses.create(
-        model="gpt-4o-mini",
-        input=prompt
-    )
+    # 🔥 ADD THIS — full error capture
+    try:
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=prompt
+        )
+        explanation = response.output_text
 
-    explanation = response.output_text
+        return {
+            "predicted_price": round(prediction, 2),
+            "explanation": explanation
+        }
 
-    return {
-        "predicted_price": round(prediction, 2),
-        "explanation": explanation
+    except Exception as e:
+        # return full clear error message instead of 500
+        return {
+            "error": "LLM error",
+            "detail": str(e),
+            "type": type
+
     }
