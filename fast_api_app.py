@@ -21,8 +21,8 @@ import openai
  # 1. خواندن API Key از Environment Variable
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    
-    return {"error": "Missing OPENAI_API_KEY in environment variables."}
+    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
+
 client = openai.OpenAI(api_key=api_key)
 
 
