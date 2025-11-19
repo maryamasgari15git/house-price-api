@@ -16,9 +16,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
 import os
-from openai import OpenAI
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+import openai
+    
+ # 1. خواندن API Key از Environment Variable
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    
+    return {"error": "Missing OPENAI_API_KEY in environment variables."}
+client = openai.OpenAI(api_key=api_key)
 
 
 
@@ -227,11 +232,14 @@ async def predict_csv(file: UploadFile = File(...)):
 
 @app.post("/predict_with_explanation")
 def explain_prediction(data: HouseData):
-    # 1. ML Prediction
+     # 2. پیش‌بینی ML
     X = [[data.area, data.rooms, data.distance]]
-    prediction = float(model.predict(X)[0])
+    try:
+        prediction = float(model.predict(X)[0])
+    except Exception as e:
+        return {"error": "ML prediction failed", "detail": str(e)}
 
-    # 2. LLM Explanation
+    # 3. آماده کردن prompt برای LLM
     prompt = f"""
     You are a real estate assistant.
     The model predicted this price: {prediction}.
@@ -243,6 +251,7 @@ def explain_prediction(data: HouseData):
     Explain why the prediction makes sense in simple terms.
     """
 
+    # 4. درخواست به LLM و مدیریت خطا
     try:
         response = client.responses.create(
             model="gpt-4o-mini",
@@ -250,9 +259,9 @@ def explain_prediction(data: HouseData):
         )
         explanation = response.output_text
     except Exception as e:
-        # اینجا خطای دقیق را برمی‌گردانیم
-        return {"error": "LLM error", "detail": str(e)}
+        return {"error": "LLM request failed", "detail": str(e)}
 
+    # 5. بازگرداندن نتیجه
     return {
         "predicted_price": round(prediction, 2),
         "explanation": explanation
