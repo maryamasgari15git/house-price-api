@@ -222,7 +222,7 @@ async def predict_csv(file: UploadFile = File(...)):
     return StreamingResponse(buf, media_type="text/csv",
                              headers={"Content-Disposition": f'attachment; filename="{out_filename}"'})
     
-@app.post("/explain_prediction")
+@app.post("/predict_with_explanation")
 def explain_prediction(data: HouseData):
     # ۱. گرفتن پیش‌بینی از مدل
     X = [[data.area, data.rooms, data.distance]]
