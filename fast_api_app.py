@@ -16,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 import openai
 import os
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 
@@ -222,28 +223,31 @@ async def predict_csv(file: UploadFile = File(...)):
     return StreamingResponse(buf, media_type="text/csv",
                              headers={"Content-Disposition": f'attachment; filename="{out_filename}"'})
     
+
 @app.post("/predict_with_explanation")
 def explain_prediction(data: HouseData):
-    # ۱. گرفتن پیش‌بینی از مدل
+    # 1. ML Prediction
     X = [[data.area, data.rooms, data.distance]]
     prediction = float(model.predict(X)[0])
 
-    # ۲. پرسش به LLM
+    # 2. LLM Explanation
     prompt = f"""
-    You are a real estate assistant. 
-    Given the following input features:
-    area: {data.area}, rooms: {data.rooms}, distance: {data.distance},
-    and the predicted house price: {prediction},
-    explain in simple terms why the price is this value and what factors influenced it.
+    You are a real estate assistant.
+    The model predicted this price: {prediction}.
+    Features:
+    - Area: {data.area}
+    - Rooms: {data.rooms}
+    - Distance: {data.distance}
+
+    Explain why the prediction makes sense in simple terms.
     """
 
-    response = openai.ChatCompletion.create(
-        model="gpt-5.1",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=200
+    response = client.responses.create(
+        model="gpt-4o-mini",
+        input=prompt
     )
 
-    explanation = response.choices[0].message.content
+    explanation = response.output_text
 
     return {
         "predicted_price": round(prediction, 2),
