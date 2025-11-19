@@ -14,7 +14,7 @@ from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
-import openai
+
 import os
 from openai import OpenAI
 
