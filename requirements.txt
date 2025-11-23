@@ -9,3 +9,4 @@ requests
 jinja2
 streamlit
 openai
+groq
