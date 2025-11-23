@@ -16,14 +16,16 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
 import os
-import openai
+#import openai
+from groq import Groq
     
  # 1. خواندن API Key از Environment Variable
-api_key = os.getenv("OPENAI_API_KEY")
-if not api_key:
-    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
+ #api_key = os.getenv("OPENAI_API_KEY")
+ #if not api_key:
+ #    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
 
-client = openai.OpenAI(api_key=api_key)
+ #client = openai.OpenAI(api_key=api_key)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 
@@ -263,20 +265,18 @@ def explain_prediction(data: HouseData):
     
     Please explain this prediction *in simple language*, showing which features increased or decreased the price.
     """
+     # 4. درخواست به LLM و مدیریت خطا
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        explanation = response.choices[0].message["content"]
+    except Exception as e:
+        
+         return {"error": "LLM request failed", "detail": str(e)}
+
  
 
-    # 4. درخواست به LLM و مدیریت خطا
-    try:
-        response = client.responses.create(
-            model="gpt-4o-mini",
-            input=prompt
-        )
-        explanation = response.output_text
-    except Exception as e:
-        return {"error": "LLM request failed", "detail": str(e)}
-
-    # 5. بازگرداندن نتیجه
-    return {
-        "predicted_price": round(prediction, 2),
-        "explanation": explanation
-    }

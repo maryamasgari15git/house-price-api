@@ -14,9 +14,18 @@ from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
-import openai
+
 import os
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+#import openai
+from groq import Groq
+    
+ # 1. خواندن API Key از Environment Variable
+ #api_key = os.getenv("OPENAI_API_KEY")
+ #if not api_key:
+ #    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
+
+ #client = openai.OpenAI(api_key=api_key)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 
@@ -29,6 +38,10 @@ templates = Jinja2Templates(directory="templates")
 # --- بارگذاری مدل ---
 model = joblib.load("house_price_model.pkl")
 REQUIRED_COLUMNS = ["area", "rooms", "distance"]
+coef_area = model.coef_[0]
+coef_rooms = model.coef_[1]
+coef_distance = model.coef_[2]
+
 
 
 # --- مدل ورودی ---
@@ -222,30 +235,48 @@ async def predict_csv(file: UploadFile = File(...)):
     return StreamingResponse(buf, media_type="text/csv",
                              headers={"Content-Disposition": f'attachment; filename="{out_filename}"'})
     
+
 @app.post("/predict_with_explanation")
 def explain_prediction(data: HouseData):
-    # ۱. گرفتن پیش‌بینی از مدل
+     # 2. پیش‌بینی ML
     X = [[data.area, data.rooms, data.distance]]
-    prediction = float(model.predict(X)[0])
-
-    # ۲. پرسش به LLM
+    try:
+        prediction = float(model.predict(X)[0])
+    except Exception as e:
+        return {"error": "ML prediction failed", "detail": str(e)}
+        
+    
+    # 3. آماده کردن prompt برای LLM
     prompt = f"""
-    You are a real estate assistant. 
-    Given the following input features:
-    area: {data.area}, rooms: {data.rooms}, distance: {data.distance},
-    and the predicted house price: {prediction},
-    explain in simple terms why the price is this value and what factors influenced it.
+    You are a real estate assistant.
+    
+    We have a house price model with the following feature contributions:
+    
+    - Area effect: Larger area increases price by {coef_area:.2f} per square meter.
+    - Rooms effect: Each additional room increases price by {coef_rooms:.2f}.
+    - Distance effect: Being farther from city center reduces price by {coef_distance:.2f} per km.
+    
+    For this specific input:
+    - Area = {data.area}
+    - Rooms = {data.rooms}
+    - Distance = {data.distance}
+    
+    The model predicted: {prediction}
+    
+    Please explain this prediction *in simple language*, showing which features increased or decreased the price.
     """
+     # 4. درخواست به LLM و مدیریت خطا
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=[
+                {"role": "user", "content": prompt}
+            ]
+        )
+        explanation = response.choices[0].message["content"]
+    except Exception as e:
+        
+         return {"error": "LLM request failed", "detail": str(e)}
 
-    response = openai.ChatCompletion.create(
-        model="gpt-5.1",
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=200
-    )
+ 
 
-    explanation = response.choices[0].message.content
-
-    return {
-        "predicted_price": round(prediction, 2),
-        "explanation": explanation
-    }
