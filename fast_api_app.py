@@ -36,6 +36,10 @@ templates = Jinja2Templates(directory="templates")
 # --- بارگذاری مدل ---
 model = joblib.load("house_price_model.pkl")
 REQUIRED_COLUMNS = ["area", "rooms", "distance"]
+coef_area = model.coef_[0]
+coef_rooms = model.coef_[1]
+coef_distance = model.coef_[2]
+
 
 
 # --- مدل ورودی ---
@@ -238,18 +242,28 @@ def explain_prediction(data: HouseData):
         prediction = float(model.predict(X)[0])
     except Exception as e:
         return {"error": "ML prediction failed", "detail": str(e)}
-
+        
+    
     # 3. آماده کردن prompt برای LLM
     prompt = f"""
     You are a real estate assistant.
-    The model predicted this price: {prediction}.
-    Features:
-    - Area: {data.area}
-    - Rooms: {data.rooms}
-    - Distance: {data.distance}
-
-    Explain why the prediction makes sense in simple terms.
+    
+    We have a house price model with the following feature contributions:
+    
+    - Area effect: Larger area increases price by {coef_area:.2f} per square meter.
+    - Rooms effect: Each additional room increases price by {coef_rooms:.2f}.
+    - Distance effect: Being farther from city center reduces price by {coef_distance:.2f} per km.
+    
+    For this specific input:
+    - Area = {data.area}
+    - Rooms = {data.rooms}
+    - Distance = {data.distance}
+    
+    The model predicted: {prediction}
+    
+    Please explain this prediction *in simple language*, showing which features increased or decreased the price.
     """
+ 
 
     # 4. درخواست به LLM و مدیریت خطا
     try:
