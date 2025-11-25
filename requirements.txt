@@ -10,3 +10,4 @@ jinja2
 streamlit
 openai
 groq
+deepseek

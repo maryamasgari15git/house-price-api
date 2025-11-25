@@ -16,8 +16,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
 import os
+from deepseek import DeepSeek
 #import openai
-from groq import Groq
+#from groq import Groq
     
  # 1. خواندن API Key از Environment Variable
  #api_key = os.getenv("OPENAI_API_KEY")
@@ -25,7 +26,8 @@ from groq import Groq
  #    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
 
  #client = openai.OpenAI(api_key=api_key)
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+#client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+client = DeepSeek(api_key=os.getenv("DEEPSEEK_API_KEY"))
 
 
 
@@ -268,7 +270,7 @@ def explain_prediction(data: HouseData):
      # 4. درخواست به LLM و مدیریت خطا
     try:
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="deepseek-chat",
             messages=[
                 {"role": "user", "content": prompt}
             ]
