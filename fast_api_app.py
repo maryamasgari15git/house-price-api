@@ -16,7 +16,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
 
 import os
-from deepseek import DeepSeek
+from deepseek import DeepSeekAPI
+
 #import openai
 #from groq import Groq
     
@@ -27,8 +28,7 @@ from deepseek import DeepSeek
 
  #client = openai.OpenAI(api_key=api_key)
 #client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-client = DeepSeek(api_key=os.getenv("DEEPSEEK_API_KEY"))
-
+client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
 
 
 app = FastAPI(title="House Price API with History")
