@@ -11,3 +11,4 @@ streamlit
 openai
 groq
 deepseek
+DeepSeekAPI
