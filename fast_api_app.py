@@ -14,21 +14,26 @@ from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
-
+#from openai import OpenAI
 import os
-from deepseek import DeepSeekAPI
+#from deepseek import DeepSeekAPI
 
-#import openai
+import openai
 #from groq import Groq
     
  # 1. خواندن API Key از Environment Variable
- #api_key = os.getenv("OPENAI_API_KEY")
- #if not api_key:
- #    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    
+   raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
 
- #client = openai.OpenAI(api_key=api_key)
+client = openai.OpenAI(api_key=api_key)
 #client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
+#client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
+#client = OpenAI(
+ #   api_key=os.getenv("DEEPSEEK_API_KEY"),
+ #   base_url="https://api.deepseek.com"
+#)
 
 
 app = FastAPI(title="House Price API with History")
@@ -269,16 +274,18 @@ def explain_prediction(data: HouseData):
     """
      # 4. درخواست به LLM و مدیریت خطا
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        )
-        explanation = response.choices[0].message["content"]
-    except Exception as e:
         
-         return {"error": "LLM request failed", "detail": str(e)}
+        response = client.responses.create(
+            model="gpt-4o-mini",
+            input=prompt
+        )
+        explanation = response.output_text
 
- 
+     except Exception as e:
+         return {
+             
+             "error": "LLM request failed",
+             "detail": str(e)
+         }
 
+  
