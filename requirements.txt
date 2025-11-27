@@ -9,6 +9,3 @@ requests
 jinja2
 streamlit
 openai
-groq
-deepseek
-deepseek-api
