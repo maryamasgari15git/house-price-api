@@ -14,20 +14,23 @@ from datetime import datetime
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.requests import Request
-#from openai import OpenAI
+from openai 
 import os
 #from deepseek import DeepSeekAPI
 
-import openai
+
 #from groq import Groq
     
  # 1. خواندن API Key از Environment Variable
+
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
-    
-   raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
+    raise RuntimeError("Missing OPENAI_API_KEY in environment variables.")
 
+
+# ایجاد کلاینت OpenAI
 client = openai.OpenAI(api_key=api_key)
+
 #client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 #client = DeepSeekAPI(api_key=os.getenv("DEEPSEEK_API_KEY"))
 #client = OpenAI(
@@ -273,6 +276,7 @@ def explain_prediction(data: HouseData):
     Please explain this prediction *in simple language*, showing which features increased or decreased the price.
     """
      # 4. درخواست به LLM و مدیریت خطا
+    
     try:
         
         response = client.responses.create(
@@ -288,4 +292,7 @@ def explain_prediction(data: HouseData):
              "detail": str(e)
          }
 
-  
+      return {
+        "predicted_price": round(prediction, 2),
+        "explanation": explanation
+      }
